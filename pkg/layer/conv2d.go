@@ -20,9 +20,9 @@ type Conv2D struct {
 	Activation   Activation
 }
 
-func NewConv2D(kernelWidth, kernelHeight, inputWidth, inputHeight, stride, padding, filters int, activation Activation) (*Conv2D, error) {
+func NewConv2D(kernelWidth, kernelHeight, inputWidth, inputHeight, stride, padding, filters int, activation Activation) *Conv2D {
 	if kernelWidth <= 0 || kernelHeight <= 0 || inputWidth <= 0 || inputHeight <= 0 || stride <= 0 || padding < 0 || filters <= 0 {
-		return nil, errors.New("invalid parameters for Conv2D layer")
+		panic("invalid parameters for Conv2D layer")
 	}
 
 	weights := make([]*mat.Dense, filters)
@@ -43,7 +43,7 @@ func NewConv2D(kernelWidth, kernelHeight, inputWidth, inputHeight, stride, paddi
 		Weights:      weights,
 		Biases:       biases,
 		Activation:   activation,
-	}, nil
+	}
 }
 
 func (c *Conv2D) Forward(input *mat.Dense) (*mat.Dense, error) {

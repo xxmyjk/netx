@@ -24,10 +24,7 @@ func TestConv2D(t *testing.T) {
 	filters := 1
 	activation := NewReLU()
 
-	conv2D, err := NewConv2D(kernelWidth, kernelHeight, inputWidth, inputHeight, stride, padding, filters, activation)
-	if err != nil {
-		t.Fatalf("failed to create Conv2D layer: %v", err)
-	}
+	conv2D := NewConv2D(kernelWidth, kernelHeight, inputWidth, inputHeight, stride, padding, filters, activation)
 
 	// Set predefined weights and biases for testing
 	conv2D.Weights[0] = mat.NewDense(kernelHeight, kernelWidth, []float64{
