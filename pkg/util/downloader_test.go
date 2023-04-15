@@ -1,7 +1,6 @@
 package util
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -11,7 +10,7 @@ import (
 
 func TestDownloadFileWithResume(t *testing.T) {
 	// 创建一个临时文件
-	tempFile, err := ioutil.TempFile("", "test_download")
+	tempFile, err := os.CreateTemp("", "test_download")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
@@ -32,7 +31,7 @@ func TestDownloadFileWithResume(t *testing.T) {
 	defer ts.Close()
 
 	// 创建一个临时目录存放下载的文件
-	tempDir, err := ioutil.TempDir("", "test_download_destination")
+	tempDir, err := os.MkdirTemp("", "test_download_destination")
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
@@ -46,7 +45,7 @@ func TestDownloadFileWithResume(t *testing.T) {
 	}
 
 	// 检查下载的文件内容是否正确
-	downloadedContent, err := ioutil.ReadFile(destFile)
+	downloadedContent, err := os.ReadFile(destFile)
 	if err != nil {
 		t.Fatalf("Failed to read downloaded file: %v", err)
 	}
