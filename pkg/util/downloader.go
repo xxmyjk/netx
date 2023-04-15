@@ -98,7 +98,6 @@ func downloadFileWithResume(filePath, url string) error {
 
 	// 获取文件总大小
 	contentLength := resp.Header.Get("Content-Length")
-	println(contentLength)
 	var fileSize int64
 	if contentLength != "" {
 		fileSize, err = strconv.ParseInt(contentLength, 10, 64)
@@ -126,10 +125,16 @@ func downloadFileWithResume(filePath, url string) error {
 		return err
 	}
 
+	// check if outFile Close
+	if err := outFile.Close(); err != nil {
+		return err
+	}
+
 	err = os.Rename(tempFilePath, filePath)
 	if err != nil {
 		return err
 	}
 
 	return nil
+
 }
