@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"gonum.org/v1/gonum/mat"
 )
 
 const (
@@ -184,4 +186,23 @@ func PreprocessMNIST(data *MNISTData) ([][][]float64, [][]float64) {
 	}
 
 	return normalizedImages, oneHotLabels
+}
+
+func MNISTDataToMatDense(images [][][]float64) []*mat.Dense {
+	numImages := len(images)
+	rows := len(images[0])
+	cols := len(images[0][0])
+	matrices := make([]*mat.Dense, numImages)
+
+	for i := 0; i < numImages; i++ {
+		data := make([]float64, rows*cols)
+		for j := 0; j < rows; j++ {
+			for k := 0; k < cols; k++ {
+				data[j*cols+k] = images[i][j][k]
+			}
+		}
+		matrices[i] = mat.NewDense(rows, cols, data)
+	}
+
+	return matrices
 }
