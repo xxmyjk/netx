@@ -43,3 +43,8 @@ func (s *Softmax) Apply(matrix *mat.Dense) error {
 func (s *Softmax) ApplySingle(value float64) (float64, error) {
 	return 0, errors.New("cannot apply softmax to a single value")
 }
+
+func (s *Softmax) ApplyDerivative(m *mat.Dense) (*mat.Dense, error) {
+	// TODO: unimplemented
+	return nil, nil
+}

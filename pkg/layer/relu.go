@@ -1,8 +1,6 @@
 package layer
 
 import (
-	"math"
-
 	"gonum.org/v1/gonum/mat"
 )
 
@@ -14,10 +12,31 @@ func NewReLU() *ReLU {
 
 func (r *ReLU) Apply(m *mat.Dense) error {
 	rows, cols := m.Dims()
+
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
-			m.Set(i, j, math.Max(0, m.At(i, j)))
+			val := m.At(i, j)
+			if val < 0 {
+				m.Set(i, j, 0)
+			}
 		}
 	}
 	return nil
+}
+
+func (r *ReLU) ApplyDerivative(m *mat.Dense) (*mat.Dense, error) {
+	rows, cols := m.Dims()
+	derivative := mat.NewDense(rows, cols, nil)
+
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			val := m.At(i, j)
+			if val > 0 {
+				derivative.Set(i, j, 1)
+			} else {
+				derivative.Set(i, j, 0)
+			}
+		}
+	}
+	return derivative, nil
 }

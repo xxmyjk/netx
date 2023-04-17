@@ -17,6 +17,8 @@ type Conv2D struct {
 	Filters      int
 	Weights      []*mat.Dense
 	Biases       *mat.Dense
+	dWeights     []*mat.Dense
+	dBiases      *mat.Dense
 	Activation   Activation
 }
 
@@ -32,6 +34,12 @@ func NewConv2D(kernelWidth, kernelHeight, inputWidth, inputHeight, stride, paddi
 
 	biases := mat.NewDense(filters, 1, randomWeights(filters))
 
+	dWeights := make([]*mat.Dense, filters)
+	for i := range dWeights {
+		dWeights[i] = mat.NewDense(kernelHeight, kernelWidth, nil)
+	}
+	dBiases := mat.NewDense(filters, 1, nil)
+
 	return &Conv2D{
 		KernelWidth:  kernelWidth,
 		KernelHeight: kernelHeight,
@@ -42,6 +50,8 @@ func NewConv2D(kernelWidth, kernelHeight, inputWidth, inputHeight, stride, paddi
 		Filters:      filters,
 		Weights:      weights,
 		Biases:       biases,
+		dWeights:     dWeights,
+		dBiases:      dBiases,
 		Activation:   activation,
 	}
 }
@@ -79,6 +89,63 @@ func (c *Conv2D) Forward(input *mat.Dense) (*mat.Dense, error) {
 	}
 
 	return output, nil
+}
+
+func (c *Conv2D) Backward(input, gradOutput *mat.Dense) (*mat.Dense, error) {
+	outputWidth := (c.InputWidth-c.KernelWidth+2*c.Padding)/c.Stride + 1
+	outputHeight := (c.InputHeight-c.KernelHeight+2*c.Padding)/c.Stride + 1
+
+	// Calculate dWeights and dBiases
+	for f := 0; f < c.Filters; f++ {
+		for y := 0; y < outputHeight; y++ {
+			for x := 0; x < outputWidth; x++ {
+				for ky := 0; ky < c.KernelHeight; ky++ {
+					for kx := 0; kx < c.KernelWidth; kx++ {
+						iy := y*c.Stride - c.Padding + ky
+						ix := x*c.Stride - c.Padding + kx
+
+						if iy >= 0 && iy < c.InputHeight && ix >= 0 && ix < c.InputWidth {
+							inputValue := input.At(iy, ix)
+							gradOutputValue := gradOutput.At(y, x)
+							weightGrad := c.dWeights[f].At(ky, kx) + inputValue*gradOutputValue
+							c.dWeights[f].Set(ky, kx, weightGrad)
+						}
+					}
+				}
+				biasGrad := c.dBiases.At(f, 0) + gradOutput.At(y, x)
+				c.dBiases.Set(f, 0, biasGrad)
+			}
+		}
+	}
+
+	// Calculate input gradient
+	gradInput := mat.NewDense(c.InputHeight, c.InputWidth, nil)
+	for y := 0; y < c.InputHeight; y++ {
+		for x := 0; x < c.InputWidth; x++ {
+			for f := 0; f < c.Filters; f++ {
+				for ky := 0; ky < c.KernelHeight; ky++ {
+					for kx := 0; kx < c.KernelWidth; kx++ {
+						oy := (y + c.Padding - ky) / c.Stride
+						ox := (x + c.Padding - kx) / c.Stride
+
+						if oy >= 0 && oy < outputHeight && ox >= 0 && ox < outputWidth {
+							inputValue := gradOutput.At(oy, ox)
+							weightValue := c.Weights[f].At(ky, kx)
+							gradInputValue := gradInput.At(y, x) + inputValue*weightValue
+							gradInput.Set(y, x, gradInputValue)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Apply the activation function's derivative
+	if _, err := c.Activation.ApplyDerivative(gradInput); err != nil {
+		return nil, errors.Wrap(err, "failed to apply activation function's derivative")
+	}
+
+	return gradInput, nil
 }
 
 func randomWeights(size int) []float64 {
